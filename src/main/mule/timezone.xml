@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="353c63ea-e4f0-49c3-86df-ddf341e3046e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="67e00649-fa12-4c69-9432-91faa0c06583" >
+		<http:request-connection host="worldtimeapi.org"/>
+	</http:request-config>
+	<flow name="timezoneFlow" doc:id="8a2bc000-4283-466b-b226-f617c4273ceb" tracking:enable-default-events="true">
+		<http:listener doc:name="Listener" doc:id="7f875ce7-2bc0-420b-8216-fd654bf3dccc" config-ref="HTTP_Listener_config" path="/tz/{region}/{city}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1b7d83b2-f608-4191-ab7f-c5461c5d9118" message="******************Start Log************************"/>
+		<ee:transform doc:name="Transform Message" doc:id="00a35212-83d7-40d2-b1b8-97f08fa9d76f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="reg" ><![CDATA[attributes.uriParams.'region']]></ee:set-variable>
+				<ee:set-variable variableName="cit" ><![CDATA[attributes.uriParams.'city']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="920ea835-0963-4e33-b416-2115bb4f6205" config-ref="HTTP_Request_configuration" path="api/timezone/{region}/{city}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	city : vars.cit,
+	region : vars.reg
+}]]]></http:uri-params>
+		</http:request>
+	</flow>
+</mule>
